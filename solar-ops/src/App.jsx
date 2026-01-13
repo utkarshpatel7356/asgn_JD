@@ -4,6 +4,8 @@ import { pr_ICR17 } from './data/pr_ICR17'; // Import Performance Data
 import { calculateBounds, processMapData } from './utils/geoUtils';
 import { getDates } from './utils/styleUtils';
 import SolarMap from './components/SolarMap';
+import { generateInsights } from './utils/analytics';
+import InsightsPanel from './components/InsightsPanel';
 
 function App() {
   const [appState, setAppState] = useState({
@@ -12,6 +14,9 @@ function App() {
     dates: [],
     isReady: false
   });
+
+
+
 
   // Controls the Time Slider
   const [dateIndex, setDateIndex] = useState(0);
@@ -35,8 +40,20 @@ function App() {
   if (!appState.isReady) return <div className="text-white">Loading...</div>;
 
   // Derive current data based on slider position
-  const currentDate = appState.dates[dateIndex];
-  const currentPerformance = pr_ICR17.pr_data[currentDate];
+  // const currentDate = appState.dates[dateIndex];
+  // const currentPerformance = pr_ICR17.pr_data[currentDate];
+
+
+    // Derive current data
+    const currentDate = appState.dates[dateIndex];
+    const currentPerformance = pr_ICR17.pr_data[currentDate];
+  
+    // Derive PREVIOUS day data (for trend analysis)
+    const prevDate = dateIndex > 0 ? appState.dates[dateIndex - 1] : null;
+    const prevPerformance = prevDate ? pr_ICR17.pr_data[prevDate] : null;
+  
+    // Run the AI Engine
+    const analysis = generateInsights(currentDate, currentPerformance, prevPerformance);
 
   return (
     <div className="h-screen w-screen relative font-sans">
@@ -47,7 +64,7 @@ function App() {
         bounds={appState.bounds} 
         currentDayData={currentPerformance} // Pass the data slice
       />
-      
+      <InsightsPanel data={analysis}/>
       {/* 2. The HUD (Heads Up Display) */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3/4 max-w-2xl bg-slate-900/90 border border-slate-700 p-6 rounded-2xl backdrop-blur-xl z-[1000] shadow-2xl shadow-black">
         
@@ -64,6 +81,7 @@ function App() {
           </div>
         </div>
 
+        
         {/* The Slider */}
         <input 
           type="range" 
