@@ -1,5 +1,4 @@
 
-# SuperPower Solar Asset Observability Dashboard
 
 A high-performance, dark-mode visualization system for monitoring solar asset health. This application correlates spatial layout data with temporal performance metrics to provide operators with actionable insights.
 
