@@ -47,9 +47,17 @@ function App() {
   const prevDate = dateIndex > 0 ? appState.dates[dateIndex - 1] : null;
   const prevPerformance = prevDate ? appState.performanceData[prevDate] : null;
 
-  // Run the AI Engine
-  const analysis = generateInsights(currentDate, currentPerformance, prevPerformance);
+  const twoDaysAgoDate = dateIndex > 1 ? appState.dates[dateIndex - 2] : null;
+  const twoDaysAgoPerformance = twoDaysAgoDate ? appState.performanceData[twoDaysAgoDate] : null;
 
+  // Run the AI Engine
+  const analysis = generateInsights(
+      currentDate, 
+      currentPerformance, 
+      prevPerformance, 
+      twoDaysAgoPerformance // Pass the 3rd day
+  );
+  
   return (
     <div className="h-screen w-screen relative font-sans bg-slate-900">
       
