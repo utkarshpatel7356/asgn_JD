@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react';
 import { map_ICR17 } from './data/map_ICR17';
-import { pr_ICR17 } from './data/pr_ICR17'; // Import Performance Data
+// REMOVED: import { pr_ICR17 } ... (We use the service now)
 import { calculateBounds, processMapData } from './utils/geoUtils';
-import { getDates } from './utils/styleUtils';
+// REMOVED: import { getDates } ... (The service provides the timeline)
 import SolarMap from './components/SolarMap';
 import { generateInsights } from './utils/analytics';
 import InsightsPanel from './components/InsightsPanel';
+import { getUnifiedPerformanceData } from './services/dataService';
 
 function App() {
   const [appState, setAppState] = useState({
     processedMap: null,
     bounds: null,
     dates: [],
+    performanceData: null, // Added explicit initial state
     isReady: false
   });
 
-
-
-
-  // Controls the Time Slider
   const [dateIndex, setDateIndex] = useState(0);
 
   useEffect(() => {
@@ -26,46 +24,46 @@ function App() {
     const bounds = calculateBounds(map_ICR17.areas);
     const processedMap = processMapData(map_ICR17);
     
-    // 2. Extract Dates from PR Data (Bonus C1: Dynamic Date Handling)
-    const dates = getDates(pr_ICR17.pr_data);
+    // 2. Ingest Unified Data (2024 + 2025)
+    // The service handles the merging and sorting logic
+    const { timeline, values } = getUnifiedPerformanceData();
 
     setAppState({
       processedMap,
       bounds,
-      dates,
+      dates: timeline,       // The dynamic timeline
+      performanceData: values, // The unified dataset
       isReady: true
     });
   }, []);
 
-  if (!appState.isReady) return <div className="text-white">Loading...</div>;
+  if (!appState.isReady) return <div className="h-screen w-screen bg-slate-900 flex items-center justify-center text-cyan-400 animate-pulse">Initializing Solar Ops...</div>;
 
-  // Derive current data based on slider position
-  // const currentDate = appState.dates[dateIndex];
-  // const currentPerformance = pr_ICR17.pr_data[currentDate];
+  // Derive current data
+  const currentDate = appState.dates[dateIndex];
+  const currentPerformance = appState.performanceData ? appState.performanceData[currentDate] : null;
 
+  // Derive PREVIOUS day data (for AI trend analysis)
+  const prevDate = dateIndex > 0 ? appState.dates[dateIndex - 1] : null;
+  const prevPerformance = prevDate ? appState.performanceData[prevDate] : null;
 
-    // Derive current data
-    const currentDate = appState.dates[dateIndex];
-    const currentPerformance = pr_ICR17.pr_data[currentDate];
-  
-    // Derive PREVIOUS day data (for trend analysis)
-    const prevDate = dateIndex > 0 ? appState.dates[dateIndex - 1] : null;
-    const prevPerformance = prevDate ? pr_ICR17.pr_data[prevDate] : null;
-  
-    // Run the AI Engine
-    const analysis = generateInsights(currentDate, currentPerformance, prevPerformance);
+  // Run the AI Engine
+  const analysis = generateInsights(currentDate, currentPerformance, prevPerformance);
 
   return (
-    <div className="h-screen w-screen relative font-sans">
+    <div className="h-screen w-screen relative font-sans bg-slate-900">
       
       {/* 1. The Map Layer */}
       <SolarMap 
         mapData={appState.processedMap} 
         bounds={appState.bounds} 
-        currentDayData={currentPerformance} // Pass the data slice
+        currentDayData={currentPerformance} 
       />
+      
+      {/* 2. The AI Insights Layer */}
       <InsightsPanel data={analysis}/>
-      {/* 2. The HUD (Heads Up Display) */}
+      
+      {/* 3. The HUD (Heads Up Display) */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-3/4 max-w-2xl bg-slate-900/90 border border-slate-700 p-6 rounded-2xl backdrop-blur-xl z-[1000] shadow-2xl shadow-black">
         
         {/* Header Info */}
@@ -80,7 +78,6 @@ function App() {
              <span className="text-cyan-400 font-bold text-sm">Site Status: Active</span>
           </div>
         </div>
-
         
         {/* The Slider */}
         <input 
